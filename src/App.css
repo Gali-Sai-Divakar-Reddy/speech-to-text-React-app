@@ -1,0 +1,18 @@
+.App {
+  text-align: center;
+  margin-top: 50px;
+}
+
+textarea {
+  width: 80%;
+  height: 200px;
+  margin-top: 20px;
+  font-size: 18px;
+}
+
+button {
+  margin: 10px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+}
