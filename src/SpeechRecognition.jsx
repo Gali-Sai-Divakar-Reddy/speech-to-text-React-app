@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
 
 const SpeechRecognition = () => {
   const [text, setText] = useState('');
   const [isListening, setIsListening] = useState(false);
+  const [llmResponse, setLlmResponse] = useState('');
   const recognition = useRef(null);
 
   useEffect(() => {
@@ -35,7 +37,10 @@ const SpeechRecognition = () => {
     };
 
     return () => {
-      recognition.current = null;
+      if (recognition.current) {
+        recognition.current.stop();
+        recognition.current = null;
+      }
     };
   }, []);
 
@@ -48,6 +53,29 @@ const SpeechRecognition = () => {
   const handleStop = () => {
     if (recognition.current && isListening) {
       recognition.current.stop();
+    }
+    sendTextToLLM(text);
+  };
+
+  const sendTextToLLM = async (text) => {
+    try {
+      const response = await axios.post('http://localhost:5000/api/llm', { text });
+      setLlmResponse(response.data.response);
+      // Send LLM response to TTS
+      sendTextToTTS(response.data.response);
+    } catch (error) {
+      console.error("Error sending text to LLM:", error);
+    }
+  };
+
+  const sendTextToTTS = async (text) => {
+    try {
+      const response = await axios.post('http://localhost:5000/api/tts', { text }, { responseType: 'blob' });
+      const audioUrl = URL.createObjectURL(response.data);
+      const audio = new Audio(audioUrl);
+      audio.play();
+    } catch (error) {
+      console.error("Error sending text to TTS:", error);
     }
   };
 
@@ -63,9 +91,11 @@ const SpeechRecognition = () => {
       <br />
       <button onClick={handleStart} disabled={isListening}>Start Listening</button>
       <button onClick={handleStop} disabled={!isListening}>Stop Listening</button>
+      <div>
+        <h2>LLM Response:</h2>
+        <p>{llmResponse}</p>
+      </div>
     </div>
   );
 };
-
 export default SpeechRecognition;
-
